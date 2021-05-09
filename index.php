@@ -40,6 +40,7 @@ if (isset($_GET['sub_game'])) {
             )
         );
     $conn->query($insertGame);
+    header('Location:index.php');
 }
 
 if (isset($_GET['sub_round'])) {
@@ -66,6 +67,16 @@ if (isset($_GET['delete'])) {
         ->where("pk_round_id = " . $_GET['rId']);
 
     $conn->query($deleteRound);
+    header('Location:index.php');
+}
+if (isset($_GET['deleteG'])) {
+    $deleteGame = $conn->createQueryBuilder();
+    $deleteGame
+        ->delete('game')
+        ->where("pk_game_id = " . $_GET['gId']);
+
+    $conn->query($deleteGame);
+    header('Location:index.php');
 }
 
 ?>
@@ -110,9 +121,16 @@ if (isset($_GET['delete'])) {
     while (($row = $stmt->fetchAssociative()) !== false) {
         echo "<table>
                 <thead>
-                    <th colspan='7'>
+                    <th colspan='6'>
                         <h2>{$row['pk_game_id']}. Game - {$row['player1']} vs. {$row['player2']}</h2>
                     </th>
+                    
+                <td>";
+        echo "<form action=\"{$_SERVER['PHP_SELF']}\" method=\"get\">
+                        <input type=\"hidden\" name=\"gId\" value=\"{$row['pk_game_id']}\">
+                        <input type=\"submit\" name=\"deleteG\" value=\"X\">
+                    </form>";
+        echo "</td>
                 </thead>";
 
 
