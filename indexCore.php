@@ -2,102 +2,82 @@
 require_once 'vendor/autoload.php';
 session_start();
 
-require_once(__DIR__ . '/bootstrap.php');
+$connectionParams = array(
+    'url' => 'mysql://root:@localhost/usarps',
+);
+$conn = \Doctrine\DBAL\DriverManager::getConnection($connectionParams);
 
-// create a user
-$entityManager = getEntityManager();
-// $game = new RPSGame(1, 'Hasan', 'Durchfal', '04/20/2021');
-// $round = new RPSRound(1, 1, 'rock', 'paper', 2,  '04:20');
-// $entityManager->persist($game);
-// $entityManager->persist($round);
-// $entityManager->flush();
+$selectAll = $conn->createQueryBuilder();
+$selectAll
+    ->select('*')
+    ->from('game');
+$stmt = $conn->query($selectAll);
+function getWinner($sym1, $sym2)
+{
+    if ($sym1 == $sym2) {
+        return 0;
+    } else if ($sym1 == "rock" && $sym2 == "scissors") {
+        return 1;
+    } else if ($sym1 == "paper" && $sym2 == "rock") {
+        return 1;
+    } else if ($sym1 == "scissors" && $sym2 == "paper") {
+        return 1;
+    } else {
+        return 2;
+    }
+}
 
-// echo "Created User with ID " . $game->getGameNr() . PHP_EOL;
+if (isset($_GET['sub_game'])) {
+    echo $_GET['player1'];
+    $insertGame = $conn->createQueryBuilder();
+    $insertGame
+        ->insert('game')
+        ->values(
+            array(
+                'player1' => "'" . $_GET['player1'] . "'",
+                'player2' => "'" . $_GET['player2'] . "'",
+                'date' => "'" . $_GET['date'] . "'"
+            )
+        );
+    $conn->query($insertGame);
+    header('Location:index.php');
+}
 
-// echo "<br><br>";
-// List all users:
-// $games = $entityManager->getRepository("RPSGame")->findAll();
-// print "Users: " . print_r($games, true) . PHP_EOL;
-$qb = $entityManager->getRepository('RPSGame')->findAll();
-var_dump($qb);
+if (isset($_GET['sub_round'])) {
+    $insertRound = $conn->createQueryBuilder();
+    $insertRound
+        ->insert('round')
+        ->values(
+            array(
+                'fk_pk_game_id' => $_GET['fk_pk_game_id'],
+                'symbol1' => "'" . $_GET['symbol1'] . "'",
+                'symbol2' => "'" . $_GET['symbol2'] . "'",
+                'winner' => getWinner($_GET['symbol1'], $_GET['symbol2']),
+                'time' => "'" . $_GET['time'] . "'"
+            )
+        );
+    $conn->query($insertRound);
+    header('Location: index.php');
+}
 
+if (isset($_GET['delete'])) {
+    $deleteRound = $conn->createQueryBuilder();
+    $deleteRound
+        ->delete('round')
+        ->where("pk_round_id = " . $_GET['rId']);
 
-// ->where('u.id = :identifier')
-// ->orderBy('u.name', 'ASC')
-// ->setParameter('identifier', 100);
+    $conn->query($deleteRound);
+    header('Location:index.php');
+}
+if (isset($_GET['deleteG'])) {
+    $deleteGame = $conn->createQueryBuilder();
+    $deleteGame
+        ->delete('game')
+        ->where("pk_game_id = " . $_GET['gId']);
 
-
-// $selectAll = $conn->createQueryBuilder();
-// $selectAll
-//     ->select('*')
-//     ->from('game');
-// $stmt = $conn->query($selectAll);
-// function getWinner($sym1, $sym2)
-// {
-//     if ($sym1 == $sym2) {
-//         return 0;
-//     } else if ($sym1 == "rock" && $sym2 == "scissors") {
-//         return 1;
-//     } else if ($sym1 == "paper" && $sym2 == "rock") {
-//         return 1;
-//     } else if ($sym1 == "scissors" && $sym2 == "paper") {
-//         return 1;
-//     } else {
-//         return 2;
-//     }
-// }
-
-// if (isset($_GET['sub_game'])) {
-//     echo $_GET['player1'];
-//     $insertGame = $conn->createQueryBuilder();
-//     $insertGame
-//         ->insert('game')
-//         ->values(
-//             array(
-//                 'player1' => "'" . $_GET['player1'] . "'",
-//                 'player2' => "'" . $_GET['player2'] . "'",
-//                 'date' => "'" . $_GET['date'] . "'"
-//             )
-//         );
-//     $conn->query($insertGame);
-//     header('Location:index.php');
-// }
-
-// if (isset($_GET['sub_round'])) {
-//     $insertRound = $conn->createQueryBuilder();
-//     $insertRound
-//         ->insert('round')
-//         ->values(
-//             array(
-//                 'fk_pk_game_id' => $_GET['fk_pk_game_id'],
-//                 'symbol1' => "'" . $_GET['symbol1'] . "'",
-//                 'symbol2' => "'" . $_GET['symbol2'] . "'",
-//                 'winner' => getWinner($_GET['symbol1'], $_GET['symbol2']),
-//                 'time' => "'" . $_GET['time'] . "'"
-//             )
-//         );
-//     $conn->query($insertRound);
-//     header('Location: index.php');
-// }
-
-// if (isset($_GET['delete'])) {
-//     $deleteRound = $conn->createQueryBuilder();
-//     $deleteRound
-//         ->delete('round')
-//         ->where("pk_round_id = " . $_GET['rId']);
-
-//     $conn->query($deleteRound);
-//     header('Location:index.php');
-// }
-// if (isset($_GET['deleteG'])) {
-//     $deleteGame = $conn->createQueryBuilder();
-//     $deleteGame
-//         ->delete('game')
-//         ->where("pk_game_id = " . $_GET['gId']);
-
-//     $conn->query($deleteGame);
-//     header('Location:index.php');
-// }
+    $conn->query($deleteGame);
+    header('Location:index.php');
+}
 
 ?>
 
@@ -137,9 +117,7 @@ var_dump($qb);
     </h1>
 
     <?php
-    // $gameCount = $stmt->rowCount();
-    $query = $qb->getQuery();
-    $iterableResult = $query->toIterable();
+    $gameCount = $stmt->rowCount();
     while (($row = $stmt->fetchAssociative()) !== false) {
         echo "<table>
                 <thead>

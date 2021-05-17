@@ -1,4 +1,4 @@
-DROP DATABASE usarps;
+DROP DATABASE IF EXISTS usarps;
 CREATE OR REPLACE DATABASE usarps;
 USE usarps;
 
@@ -16,7 +16,7 @@ CREATE TABLE round(
     symbol2 VARCHAR(40),
     winner INTEGER,
     time TIME,
-    CONSTRAINT game FOREIGN KEY (fk_pk_game_id) REFERENCES game(pk_game_id)
+    CONSTRAINT game FOREIGN KEY (fk_pk_game_id) REFERENCES game(pk_game_id) ON DELETE CASCADE
 );
 
 INSERT INTO game(player1, player2, date) 
